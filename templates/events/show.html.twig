@@ -1,16 +1,224 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Détail événement{% endblock %}
+{% block title %}{{ event.title }} — EventApp{% endblock %}
 
 {% block body %}
-<h1>{{ event.title }}</h1>
-<p>{{ event.description }}</p>
-<p><strong>Date:</strong> {{ event.date ? event.date|date('d/m/Y H:i') : 'N/A' }}</p>
-<p><strong>Lieu:</strong> {{ event.location ?? 'Non défini' }}</p>
-<p><strong>Places:</strong> {{ event.seats ?? 'Illimités' }}</p>
-{% if event.image %}
-    <img src="{{ event.image }}" alt="{{ event.title }}" style="max-width: 100%;" />
-{% endif %}
 
-<a class="btn" href="{{ path('app_reservation_new', {'id': event.id}) }}">Réserver</a>
+{% set placesRestantes = event.seats ? event.seats - event.reservations|length : null %}
+{% set complet = placesRestantes is not null and placesRestantes <= 0 %}
+
+{# Bouton retour #}
+<a href="{{ path('app_events_index') }}"
+   class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold mb-6 transition">
+    ← Retour aux événements
+</a>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    {# === COLONNE GAUCHE (2/3) === #}
+    <div class="lg:col-span-2 space-y-6">
+
+        {# Image principale #}
+        <div class="bg-white rounded-2xl shadow overflow-hidden">
+            {% if event.image %}
+                <img src="{{ event.image }}" alt="{{ event.title }}"
+                     class="w-full h-72 object-cover">
+            {% else %}
+                <div class="w-full h-72 bg-gradient-to-br from-blue-500 to-purple-700
+                            flex flex-col items-center justify-center text-white">
+                    <span class="text-8xl mb-3">🎪</span>
+                    <span class="text-xl font-semibold opacity-80">{{ event.title }}</span>
+                </div>
+            {% endif %}
+
+            <div class="p-6">
+                {# Titre + badge #}
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <h1 class="text-3xl font-bold text-gray-800">{{ event.title }}</h1>
+                    {% if complet %}
+                        <span class="shrink-0 bg-red-100 text-red-600 text-sm font-bold px-4 py-1 rounded-full">
+                            Complet
+                        </span>
+                    {% else %}
+                        <span class="shrink-0 bg-green-100 text-green-600 text-sm font-bold px-4 py-1 rounded-full">
+                            Places dispo
+                        </span>
+                    {% endif %}
+                </div>
+
+                {# Description #}
+                {% if event.description %}
+                <div class="border-t border-gray-100 pt-4">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3">À propos de cet événement</h2>
+                    <p class="text-gray-600 leading-relaxed text-base">
+                        {{ event.description }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Infos détaillées #}
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-lg font-bold text-gray-700 mb-5">Informations pratiques</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div class="flex items-center gap-4 p-4 bg-blue-50 rounded-xl">
+                    <div class="text-3xl">📅</div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Date</p>
+                        <p class="font-bold text-gray-800">{{ event.date|date('d/m/Y') }}</p>
+                        <p class="text-blue-600 font-semibold">{{ event.date|date('H:i') }}</p>
+                    </div>
+                </div>
+
+                {% if event.location %}
+                <div class="flex items-center gap-4 p-4 bg-red-50 rounded-xl">
+                    <div class="text-3xl">📍</div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Lieu</p>
+                        <p class="font-bold text-gray-800">{{ event.location }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if event.seats %}
+                <div class="flex items-center gap-4 p-4 bg-green-50 rounded-xl">
+                    <div class="text-3xl">👥</div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Places</p>
+                        <p class="font-bold text-gray-800">{{ event.seats }} places au total</p>
+                        <p class="text-sm {{ complet ? 'text-red-500' : 'text-green-600' }} font-semibold">
+                            {{ complet ? 'Aucune place disponible' : placesRestantes ~ ' restante(s)' }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="flex items-center gap-4 p-4 bg-purple-50 rounded-xl">
+                    <div class="text-3xl">🎟️</div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Réservations</p>
+                        <p class="font-bold text-gray-800">{{ event.reservations|length }} réservation(s)</p>
+                        <p class="text-sm text-purple-600 font-semibold">enregistrée(s)</p>
+                    </div>
+                </div>
+
+            </div>
+
+            {# Barre de progression #}
+            {% if event.seats and event.seats > 0 %}
+                {% set pourcentage = ((event.seats - event.reservations|length) / event.seats * 100)|round %}
+                <div class="mt-6">
+                    <div class="flex justify-between text-sm text-gray-500 mb-2">
+                        <span>Disponibilité</span>
+                        <span class="font-semibold">{{ pourcentage }}% disponible</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-3">
+                        <div class="h-3 rounded-full transition-all duration-500
+                            {{ pourcentage > 50 ? 'bg-green-500' : (pourcentage > 20 ? 'bg-orange-400' : 'bg-red-500') }}"
+                             style="width: {{ pourcentage > 0 ? pourcentage : 2 }}%">
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>{{ event.reservations|length }} réservé(s)</span>
+                        <span>{{ event.seats }} places total</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    {# === COLONNE DROITE (1/3) — Carte de réservation === #}
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow p-6 sticky top-6">
+
+            <h2 class="text-xl font-bold text-gray-800 mb-5">Réserver ma place</h2>
+
+            {# Récap rapide #}
+            <div class="space-y-3 mb-6 pb-6 border-b border-gray-100">
+                <div class="flex items-center gap-3 text-sm text-gray-600">
+                    <span>📅</span>
+                    <span>{{ event.date|date('d/m/Y à H:i') }}</span>
+                </div>
+                {% if event.location %}
+                <div class="flex items-center gap-3 text-sm text-gray-600">
+                    <span>📍</span>
+                    <span>{{ event.location }}</span>
+                </div>
+                {% endif %}
+                {% if event.seats %}
+                <div class="flex items-center gap-3 text-sm {{ complet ? 'text-red-500' : 'text-green-600' }} font-semibold">
+                    <span>👥</span>
+                    <span>{{ complet ? 'Complet' : placesRestantes ~ ' place(s) disponible(s)' }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Action selon état #}
+            {% if is_granted('ROLE_USER') %}
+                {% if not complet %}
+                    <a href="{{ path('app_reservation_new', {id: event.id}) }}"
+                       class="w-full block text-center bg-blue-600 hover:bg-blue-700
+                              text-white font-bold py-4 px-6 rounded-xl transition
+                              shadow-md hover:shadow-lg text-lg">
+                        🎟️ Réserver maintenant
+                    </a>
+                    <p class="text-center text-xs text-gray-400 mt-3">
+                        Réservation gratuite · Confirmation immédiate
+                    </p>
+                {% else %}
+                    <button disabled
+                            class="w-full bg-gray-100 text-gray-400 font-bold
+                                   py-4 px-6 rounded-xl cursor-not-allowed text-lg">
+                        😔 Événement complet
+                    </button>
+                {% endif %}
+
+            {% else %}
+                {# Pas connecté #}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 text-center">
+                    <p class="text-yellow-800 text-sm font-semibold mb-1">
+                        Connexion requise
+                    </p>
+                    <p class="text-yellow-600 text-xs">
+                        Connectez-vous pour réserver votre place
+                    </p>
+                </div>
+                <a href="{{ path('app_login') }}"
+                   class="w-full block text-center bg-blue-600 hover:bg-blue-700
+                          text-white font-bold py-4 px-6 rounded-xl transition
+                          shadow-md hover:shadow-lg">
+                    🔐 Se connecter
+                </a>
+                <a href="{{ path('app_register') }}"
+                   class="w-full block text-center mt-3 border-2 border-blue-600
+                          text-blue-600 hover:bg-blue-50 font-bold py-3 px-6
+                          rounded-xl transition">
+                    Créer un compte
+                </a>
+            {% endif %}
+
+            {# Lien admin #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <div class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                    <a href="{{ path('admin_event_edit', {id: event.id}) }}"
+                       class="w-full block text-center bg-yellow-400 hover:bg-yellow-500
+                              text-yellow-900 font-semibold py-2 px-4 rounded-lg transition text-sm">
+                        ✏️ Modifier cet événement
+                    </a>
+                    <a href="{{ path('admin_event_reservations', {id: event.id}) }}"
+                       class="w-full block text-center bg-gray-100 hover:bg-gray-200
+                              text-gray-700 font-semibold py-2 px-4 rounded-lg transition text-sm">
+                        📋 Voir les réservations
+                    </a>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}

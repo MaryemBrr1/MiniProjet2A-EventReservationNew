@@ -1,10 +1,79 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Confirmation de réservation{% endblock %}
+{% block title %}Réservation confirmée — EventApp{% endblock %}
 
 {% block body %}
-<h1>Réservation confirmée</h1>
-<p>Merci pour votre réservation pour <strong>{{ reservation.event.title }}</strong>.</p>
-<p>Nous avons enregistré votre place sous le nom <strong>{{ reservation.name }}</strong> ({{ reservation.email }}).</p>
-<a href="{{ path('app_events_index') }}">Retour à la liste des événements</a>
+<div class="max-w-lg mx-auto py-8">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+
+        <div class="bg-gradient-to-r from-green-500 to-green-600 p-8 text-center text-white">
+            <div class="text-6xl mb-3">✅</div>
+            <h1 class="text-3xl font-bold">Réservation confirmée !</h1>
+            <p class="text-green-100 mt-2">Votre place a bien été enregistrée</p>
+        </div>
+
+        <div class="p-8">
+            <div class="space-y-4">
+
+                <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                    <span class="text-2xl">🎪</span>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Événement</p>
+                        <p class="font-bold text-gray-800 text-lg">{{ reservation.event.title }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                    <span class="text-2xl">📅</span>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Date</p>
+                        <p class="font-semibold text-gray-800">{{ reservation.event.date|date('d/m/Y à H:i') }}</p>
+                    </div>
+                </div>
+
+                {% if reservation.event.location %}
+                <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                    <span class="text-2xl">📍</span>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Lieu</p>
+                        <p class="font-semibold text-gray-800">{{ reservation.event.location }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <span class="text-2xl">👤</span>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Réservé au nom de</p>
+                        <p class="font-bold text-gray-800">{{ reservation.name }}</p>
+                        <p class="text-gray-600 text-sm">{{ reservation.email }}</p>
+                        {% if reservation.phone %}
+                            <p class="text-gray-600 text-sm">📞 {{ reservation.phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            {# Boutons — chacun mène à un endroit différent #}
+            <div class="mt-8 space-y-3">
+
+                {# Bouton principal — retour à la liste des events #}
+                <a href="{{ path('app_events_index') }}"
+                   class="w-full block text-center bg-blue-600 hover:bg-blue-700
+                          text-white font-bold py-3 px-6 rounded-xl transition shadow-md">
+                    📅 Voir d'autres événements
+                </a>
+
+                {# Bouton secondaire — retour à la page de l'event réservé #}
+                <a href="{{ path('app_events_show', {id: reservation.event.id}) }}"
+                   class="w-full block text-center border-2 border-blue-200 text-blue-600
+                          hover:bg-blue-50 font-semibold py-3 px-6 rounded-xl transition">
+                    ← Retour à l'événement
+                </a>
+
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

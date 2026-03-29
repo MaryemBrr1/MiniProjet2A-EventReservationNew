@@ -1,78 +1,94 @@
-{# templates/security/login.html.twig #}
 {% extends 'base.html.twig' %}
- 
-{% block title %}Connexion{% endblock %}
- 
+
+{% block title %}Connexion — EventApp{% endblock %}
+
 {% block body %}
-<div class="max-w-md mx-auto">
-    <div class="bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Connexion</h1>
- 
-        {# Afficher les erreurs de connexion #}
+<div class="min-h-screen flex items-center justify-center py-12">
+    <div class="bg-white rounded-2xl shadow-xl p-10 w-full max-w-md">
+
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-3">🔐</div>
+            <h1 class="text-3xl font-bold text-gray-800">Connexion</h1>
+            <p class="text-gray-500 mt-1">Accédez à votre espace EventApp</p>
+        </div>
+
         {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-800 p-3 rounded mb-4">
+            <div class="bg-red-50 border border-red-300 text-red-700 p-4 rounded-lg mb-5 flex items-center gap-2">
+                <span>⚠️</span>
                 {{ error.messageKey|trans(error.messageData, 'security') }}
             </div>
         {% endif %}
- 
-        {# Formulaire de connexion classique #}
-        <form method="post" class="space-y-4">
+
+        <form method="post" class="space-y-5">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
                 <input type="email" name="email" value="{{ last_username }}"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder="admin@example.com" autofocus>
+                       required autofocus placeholder="votre@email.com"
+                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800
+                              focus:outline-none focus:ring-2 focus:ring-blue-500
+                              transition placeholder-gray-400">
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-                <input type="password" name="password"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Mot de passe</label>
+                <input type="password" name="password" required
+                       placeholder="Votre mot de passe"
+                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800
+                              focus:outline-none focus:ring-2 focus:ring-blue-500
+                              transition placeholder-gray-400">
             </div>
+
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
             <button type="submit"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold
+                           py-3 px-4 rounded-xl transition shadow-md hover:shadow-lg">
                 Se connecter
             </button>
         </form>
- 
-        {# Separateur #}
-        <div class="flex items-center my-5">
-            <div class="flex-1 border-t border-gray-300"></div>
-            <span class="mx-3 text-gray-400 text-sm">ou</span>
-            <div class="flex-1 border-t border-gray-300"></div>
+
+        <div class="flex items-center my-6">
+            <div class="flex-1 border-t border-gray-200"></div>
+            <span class="mx-4 text-gray-400 text-sm">ou</span>
+            <div class="flex-1 border-t border-gray-200"></div>
         </div>
- 
-        {# Bouton Passkey #}
-        <button id="passkeyLoginBtn"
-                class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2">
-            <span>🔑</span> Se connecter avec Passkey
-        </button>
-            <button id="passkeyRegisterBtn"
-                    class="w-full border-2 border-green-600 text-green-600 hover:bg-green-50 font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 mt-3">
-                <span>🛡</span> Enregistrer une Passkey
+
+        <div class="space-y-3">
+            <button id="passkeyLoginBtn"
+                    class="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50
+                           font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                <span>🔑</span> Se connecter avec Passkey
             </button>
+
+            <button id="passkeyRegisterBtn"
+                    class="w-full border-2 border-green-600 text-green-600 hover:bg-green-50
+                           font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                <span>🛡️</span> Enregistrer une Passkey
+            </button>
+        </div>
+
+        <div class="text-center mt-6">
+            <p class="text-gray-500 text-sm">
+                Pas encore de compte ?
+                <a href="{{ path('app_register') }}" class="text-blue-600 font-semibold hover:underline">
+                    S'inscrire
+                </a>
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}
- 
+
 {% block javascripts %}
-{# JavaScript WebAuthn pour la connexion par Passkey #}
 <script>
 document.getElementById('passkeyLoginBtn').addEventListener('click', async () => {
     try {
-        // 1. Demander les options au serveur
         const optRes = await fetch('/api/auth/passkey/login/options', {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'
         });
         const options = await optRes.json();
- 
-        // 2. Convertir le challenge base64url en ArrayBuffer pour le navigateur
         options.challenge = Uint8Array.from(atob(options.challenge.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
- 
-        // 3. Appeler l'API WebAuthn du navigateur (ouvre la popup biometrique)
         const credential = await navigator.credentials.get({ publicKey: options });
- 
-        // 4. Convertir les ArrayBuffer en base64url pour envoyer au serveur
         const credData = {
             id: credential.id,
             rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
@@ -83,48 +99,38 @@ document.getElementById('passkeyLoginBtn').addEventListener('click', async () =>
                 signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
             }
         };
- 
-        console.log('Sending credential ID:', credData.id);
-        console.log('Full credential data:', credData);
- 
-        // 5. Envoyer au serveur pour verification
         const verifyRes = await fetch('/api/auth/passkey/login/verify', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ credential: credData })
         });
         const result = await verifyRes.json();
- 
         if (result.success) {
-            // Stocker le JWT dans localStorage pour les futures requetes API
             localStorage.setItem('jwt_token', result.token);
-            alert('Connexion reussie !');
+            alert('Connexion réussie !');
             window.location.href = '/events';
         } else {
-            alert('Erreur : ' + (result.error || 'Connexion echouee'));
+            alert('Erreur : ' + (result.error || 'Connexion échouée'));
         }
     } catch(e) {
         console.error(e);
-        alert('Passkey non disponible ou annulee. ' + e.message);
+        alert('Passkey non disponible ou annulée. ' + e.message);
     }
 });
-// Registration WebAuthn (passkey)
+
 document.getElementById('passkeyRegisterBtn').addEventListener('click', async () => {
     const email = document.querySelector('input[name="email"]').value.trim();
     if (!email) {
         alert('Merci de saisir votre email pour enregistrer une passkey.');
         return;
     }
-
     try {
         const optRes = await fetch('/api/auth/passkey/register/options', {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email })
         });
         const options = await optRes.json();
-
         options.challenge = Uint8Array.from(atob(options.challenge.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
         options.user.id = Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0));
-
         const credential = await navigator.credentials.create({ publicKey: options });
         const payload = {
             email,
@@ -138,22 +144,20 @@ document.getElementById('passkeyRegisterBtn').addEventListener('click', async ()
                 }
             }
         };
-
         const verifyRes = await fetch('/api/auth/passkey/register/verify', {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
         const result = await verifyRes.json();
-
         if (result.success) {
             localStorage.setItem('jwt_token', result.token);
-            alert('Passkey enregistree avec succes !');
+            alert('Passkey enregistrée avec succès !');
             window.location.href = '/events';
         } else {
-            alert('Erreur d\'enregistrement : ' + (result.error || 'Echec'));
+            alert('Erreur : ' + (result.error || 'Échec'));
         }
     } catch (e) {
         console.error(e);
-        alert('Passkey non disponible ou annulee. ' + e.message);
+        alert('Passkey non disponible ou annulée. ' + e.message);
     }
 });
 </script>

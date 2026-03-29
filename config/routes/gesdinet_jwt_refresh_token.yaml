@@ -1,0 +1,4 @@
+# config/routes/gesdinet_jwt_refresh_token.yaml
+gesdinet_jwt_refresh_token_refresh:
+    path: /api/token/refresh
+    controller: Gesdinet\JWTRefreshTokenBundle\Controller\RefreshTokenController::refresh

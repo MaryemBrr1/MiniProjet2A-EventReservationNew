@@ -1,30 +1,324 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Dashboard Admin — EventApp{% endblock %}
 
 {% block body %}
-<h1>Dashboard admin</h1>
-<p><a href="{{ path('admin_event_new') }}">Créer un événement</a></p>
-<table>
-    <thead>
-        <tr><th>ID</th><th>Titre</th><th>Date</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
-        {% for event in events %}
-            <tr>
-                <td>{{ event.id }}</td>
-                <td>{{ event.title }}</td>
-                <td>{{ event.date ? event.date|date('d/m/Y H:i') : 'N/A' }}</td>
-                <td>
-                    <a href="{{ path('admin_event_edit', {'id': event.id}) }}">Éditer</a>
-                    <form method="post" action="{{ path('admin_event_delete', {'id': event.id}) }}" style="display:inline;">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.id) }}">
-                        <button type="submit">Supprimer</button>
-                    </form>
-                    <a href="{{ path('admin_event_reservations', {'id': event.id}) }}">Réservations</a>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+{# ===== HEADER DASHBOARD ===== #}
+<div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 mb-8 text-white shadow-lg">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="bg-white bg-opacity-20 rounded-xl p-2">
+                    <span class="text-2xl">⚙️</span>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold">Dashboard Admin</h1>
+                    <p class="text-gray-400 text-sm">Bienvenue, {{ app.user.email }}</p>
+                </div>
+            </div>
+        </div>
+        <a href="{{ path('admin_event_new') }}"
+           class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400
+                  text-white font-bold px-6 py-3 rounded-xl transition shadow-md
+                  hover:shadow-lg whitespace-nowrap">
+            <span class="text-lg">+</span> Nouvel événement
+        </a>
+    </div>
+</div>
+
+{# ===== STATISTIQUES ===== #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 hover:shadow-md transition">
+        <div class="bg-blue-100 rounded-xl p-3 text-3xl">📅</div>
+        <div>
+            <p class="text-2xl font-bold text-gray-800">{{ events|length }}</p>
+            <p class="text-sm text-gray-500">Événements</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 hover:shadow-md transition">
+        <div class="bg-green-100 rounded-xl p-3 text-3xl">🎟️</div>
+        <div>
+            {% set totalReservations = 0 %}
+            {% for event in events %}
+                {% set totalReservations = totalReservations + event.reservations|length %}
+            {% endfor %}
+            <p class="text-2xl font-bold text-gray-800">{{ totalReservations }}</p>
+            <p class="text-sm text-gray-500">Réservations totales</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 hover:shadow-md transition">
+        <div class="bg-purple-100 rounded-xl p-3 text-3xl">👥</div>
+        <div>
+            {% set totalSeats = 0 %}
+            {% for event in events %}
+                {% if event.seats %}
+                    {% set totalSeats = totalSeats + event.seats %}
+                {% endif %}
+            {% endfor %}
+            <p class="text-2xl font-bold text-gray-800">{{ totalSeats }}</p>
+            <p class="text-sm text-gray-500">Places au total</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4 hover:shadow-md transition">
+        <div class="bg-orange-100 rounded-xl p-3 text-3xl">📊</div>
+        <div>
+            {% set eventsComplets = 0 %}
+            {% for event in events %}
+                {% if event.seats and event.reservations|length >= event.seats %}
+                    {% set eventsComplets = eventsComplets + 1 %}
+                {% endif %}
+            {% endfor %}
+            <p class="text-2xl font-bold text-gray-800">{{ eventsComplets }}</p>
+            <p class="text-sm text-gray-500">Événements complets</p>
+        </div>
+    </div>
+
+</div>
+
+{# ===== TABLEAU DES ÉVÉNEMENTS ===== #}
+<div class="bg-white rounded-2xl shadow overflow-hidden">
+
+    {# En-tête tableau #}
+    <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row
+                justify-between items-start sm:items-center gap-3">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">Liste des événements</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Gérez vos événements et consultez les réservations</p>
+        </div>
+        <span class="bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1 rounded-full">
+            {{ events|length }} événement(s)
+        </span>
+    </div>
+
+    {% if events is empty %}
+        <div class="text-center py-20">
+            <div class="text-6xl mb-4">📭</div>
+            <h3 class="text-xl font-bold text-gray-600 mb-2">Aucun événement créé</h3>
+            <p class="text-gray-400 mb-6">Commencez par créer votre premier événement</p>
+            <a href="{{ path('admin_event_new') }}"
+               class="inline-block bg-blue-600 hover:bg-blue-700 text-white
+                      font-bold py-3 px-8 rounded-xl transition">
+                + Créer un événement
+            </a>
+        </div>
+    {% else %}
+
+        {# Vue desktop : tableau #}
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-4">
+                            Événement
+                        </th>
+                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Date
+                        </th>
+                        <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Lieu
+                        </th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Places
+                        </th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Réservations
+                        </th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Statut
+                        </th>
+                        <th class="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 py-4">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for event in events %}
+                        {% set placesRestantes = event.seats ? event.seats - event.reservations|length : null %}
+                        {% set complet = placesRestantes is not null and placesRestantes <= 0 %}
+                        {% set pourcentage = event.seats and event.seats > 0 ? (event.reservations|length / event.seats * 100)|round : 0 %}
+
+                        <tr class="hover:bg-gray-50 transition">
+
+                            {# Titre #}
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500
+                                                rounded-xl flex items-center justify-center
+                                                text-white font-bold text-sm shrink-0">
+                                        {{ event.title|slice(0,1)|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-800 text-sm">{{ event.title }}</p>
+                                        {% if event.description %}
+                                            <p class="text-xs text-gray-400 mt-0.5">
+                                                {{ event.description|slice(0,45) }}{% if event.description|length > 45 %}…{% endif %}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+
+                            {# Date #}
+                            <td class="px-4 py-4">
+                                <p class="text-sm font-semibold text-gray-700">
+                                    {{ event.date|date('d/m/Y') }}
+                                </p>
+                                <p class="text-xs text-blue-500">{{ event.date|date('H:i') }}</p>
+                            </td>
+
+                            {# Lieu #}
+                            <td class="px-4 py-4">
+                                <p class="text-sm text-gray-600">
+                                    {{ event.location ?? '—' }}
+                                </p>
+                            </td>
+
+                            {# Places + barre #}
+                            <td class="px-4 py-4 text-center">
+                                {% if event.seats %}
+                                    <p class="text-sm font-bold text-gray-800">{{ event.seats }}</p>
+                                    <div class="w-16 mx-auto bg-gray-100 rounded-full h-1.5 mt-1">
+                                        <div class="h-1.5 rounded-full
+                                            {{ pourcentage >= 80 ? 'bg-red-500' : (pourcentage >= 50 ? 'bg-orange-400' : 'bg-green-500') }}"
+                                             style="width: {{ pourcentage }}%">
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400 text-sm">—</span>
+                                {% endif %}
+                            </td>
+
+                            {# Réservations #}
+                            <td class="px-4 py-4 text-center">
+                                <a href="{{ path('admin_event_reservations', {id: event.id}) }}"
+                                   class="inline-flex flex-col items-center hover:opacity-80 transition">
+                                    <span class="text-lg font-bold
+                                        {{ event.reservations|length > 0 ? 'text-blue-600' : 'text-gray-400' }}">
+                                        {{ event.reservations|length }}
+                                    </span>
+                                    <span class="text-xs text-gray-400">voir</span>
+                                </a>
+                            </td>
+
+                            {# Statut #}
+                            <td class="px-4 py-4 text-center">
+                                {% if complet %}
+                                    <span class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">
+                                        Complet
+                                    </span>
+                                {% elseif placesRestantes is not null and placesRestantes <= 5 %}
+                                    <span class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">
+                                        Presque complet
+                                    </span>
+                                {% else %}
+                                    <span class="bg-green-100 text-green-600 text-xs font-bold px-3 py-1 rounded-full">
+                                        Disponible
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            {# Actions #}
+                            <td class="px-4 py-4">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="{{ path('app_events_show', {id: event.id}) }}"
+                                       title="Voir"
+                                       class="w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600
+                                              rounded-lg flex items-center justify-center transition text-sm">
+                                        👁️
+                                    </a>
+                                    <a href="{{ path('admin_event_edit', {id: event.id}) }}"
+                                       title="Modifier"
+                                       class="w-8 h-8 bg-yellow-100 hover:bg-yellow-200 text-yellow-700
+                                              rounded-lg flex items-center justify-center transition text-sm">
+                                        ✏️
+                                    </a>
+                                    <a href="{{ path('admin_event_reservations', {id: event.id}) }}"
+                                       title="Réservations"
+                                       class="w-8 h-8 bg-blue-100 hover:bg-blue-200 text-blue-700
+                                              rounded-lg flex items-center justify-center transition text-sm">
+                                        📋
+                                    </a>
+                                    <form method="post"
+                                          action="{{ path('admin_event_delete', {id: event.id}) }}"
+                                          onsubmit="return confirm('Supprimer « {{ event.title }} » ?')">
+                                        <input type="hidden" name="_token"
+                                               value="{{ csrf_token('delete' ~ event.id) }}">
+                                        <button type="submit"
+                                                title="Supprimer"
+                                                class="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600
+                                                       rounded-lg flex items-center justify-center transition text-sm">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Vue mobile : cards #}
+        <div class="md:hidden divide-y divide-gray-100">
+            {% for event in events %}
+                {% set placesRestantes = event.seats ? event.seats - event.reservations|length : null %}
+                {% set complet = placesRestantes is not null and placesRestantes <= 0 %}
+
+                <div class="p-5">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <p class="font-bold text-gray-800">{{ event.title }}</p>
+                            <p class="text-sm text-gray-500 mt-0.5">
+                                📅 {{ event.date|date('d/m/Y à H:i') }}
+                            </p>
+                            {% if event.location %}
+                                <p class="text-sm text-gray-500">📍 {{ event.location }}</p>
+                            {% endif %}
+                        </div>
+                        {% if complet %}
+                            <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full">
+                                Complet
+                            </span>
+                        {% else %}
+                            <span class="bg-green-100 text-green-600 text-xs font-bold px-2 py-1 rounded-full">
+                                Dispo
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center gap-2 mt-3">
+                        <a href="{{ path('admin_event_edit', {id: event.id}) }}"
+                           class="flex-1 text-center bg-yellow-100 text-yellow-700 font-semibold
+                                  py-2 rounded-lg text-sm hover:bg-yellow-200 transition">
+                            ✏️ Modifier
+                        </a>
+                        <a href="{{ path('admin_event_reservations', {id: event.id}) }}"
+                           class="flex-1 text-center bg-blue-100 text-blue-700 font-semibold
+                                  py-2 rounded-lg text-sm hover:bg-blue-200 transition">
+                            📋 {{ event.reservations|length }} résas
+                        </a>
+                        <form method="post" action="{{ path('admin_event_delete', {id: event.id}) }}"
+                              onsubmit="return confirm('Supprimer ?')">
+                            <input type="hidden" name="_token"
+                                   value="{{ csrf_token('delete' ~ event.id) }}">
+                            <button type="submit"
+                                    class="bg-red-100 text-red-600 font-semibold
+                                           py-2 px-3 rounded-lg text-sm hover:bg-red-200 transition">
+                                🗑️
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+    {% endif %}
+</div>
+
 {% endblock %}

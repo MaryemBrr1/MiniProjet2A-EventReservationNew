@@ -1,20 +1,158 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Événements{% endblock %}
+{% block title %}Événements — EventApp{% endblock %}
 
 {% block body %}
-<h1>Liste des événements</h1>
+
+{# Header de la page #}
+<div class="bg-gradient-to-r from-blue-700 to-blue-900 rounded-2xl p-10 mb-10 text-white shadow-lg">
+    <div class="max-w-2xl">
+        <h1 class="text-4xl font-bold mb-3">🎪 Événements à venir</h1>
+        <p class="text-blue-200 text-lg">Découvrez et réservez vos places pour nos prochains événements</p>
+        <div class="mt-5 flex items-center gap-3">
+            <span class="bg-white bg-opacity-20 text-white text-sm font-semibold px-4 py-1 rounded-full">
+                {{ events|length }} événement(s) disponible(s)
+            </span>
+            {% if is_granted('ROLE_USER') %}
+                <span class="bg-green-400 bg-opacity-30 text-green-100 text-sm font-semibold px-4 py-1 rounded-full">
+                    ✅ Connecté
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 {% if events is empty %}
-    <p>Aucun événement trouvé.</p>
+
+    {# État vide #}
+    <div class="text-center py-24 bg-white rounded-2xl shadow">
+        <div class="text-7xl mb-5">📭</div>
+        <h2 class="text-2xl font-bold text-gray-700 mb-2">Aucun événement disponible</h2>
+        <p class="text-gray-400">Revenez bientôt, de nouveaux événements seront ajoutés.</p>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('admin_event_new') }}"
+               class="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition">
+                + Créer le premier événement
+            </a>
+        {% endif %}
+    </div>
+
 {% else %}
-    <ul>
+
+    {# Grille des événements #}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for event in events %}
-            <li>
-                <a href="{{ path('app_events_show', {'id': event.id}) }}">{{ event.title }}</a>
-                <small>({{ event.date ? event.date|date('d/m/Y H:i') : 'Date non définie' }})</small>
-            </li>
+
+            {% set placesRestantes = event.seats ? event.seats - event.reservations|length : null %}
+            {% set complet = placesRestantes is not null and placesRestantes <= 0 %}
+
+            <div class="bg-white rounded-2xl shadow hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group">
+
+                {# Image ou placeholder #}
+                <div class="relative overflow-hidden">
+                    {% if event.image %}
+                        <img src="{{ event.image }}" alt="{{ event.title }}"
+                             class="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                        <div class="w-full h-52 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            <span class="text-white text-6xl">🎪</span>
+                        </div>
+                    {% endif %}
+
+                    {# Badge places #}
+                    <div class="absolute top-3 right-3">
+                        {% if complet %}
+                            <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                                Complet
+                            </span>
+                        {% elseif placesRestantes is not null and placesRestantes <= 5 %}
+                            <span class="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                                {{ placesRestantes }} place(s)
+                            </span>
+                        {% else %}
+                            <span class="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                                Disponible
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Contenu de la card #}
+                <div class="p-6 flex flex-col flex-1">
+
+                    <h2 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition">
+                        {{ event.title }}
+                    </h2>
+
+                    {# Infos date et lieu #}
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <span class="text-blue-500">📅</span>
+                            <span>{{ event.date|date('d/m/Y') }}</span>
+                            <span class="text-gray-300">•</span>
+                            <span class="font-semibold text-blue-600">{{ event.date|date('H:i') }}</span>
+                        </div>
+                        {% if event.location %}
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <span class="text-red-400">📍</span>
+                            <span>{{ event.location }}</span>
+                        </div>
+                        {% endif %}
+                        {% if event.seats %}
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <span class="text-green-500">👥</span>
+                            <span>
+                                {% if placesRestantes is not null %}
+                                    <span class="{{ complet ? 'text-red-500 font-semibold' : 'text-green-600 font-semibold' }}">
+                                        {{ complet ? 'Complet' : placesRestantes ~ ' place(s) restante(s)' }}
+                                    </span>
+                                    sur {{ event.seats }}
+                                {% else %}
+                                    {{ event.seats }} places
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {# Description courte #}
+                    {% if event.description %}
+                    <p class="text-gray-500 text-sm leading-relaxed mb-5 flex-1">
+                        {{ event.description|slice(0, 110) }}{% if event.description|length > 110 %}…{% endif %}
+                    </p>
+                    {% else %}
+                        <div class="flex-1"></div>
+                    {% endif %}
+
+                    {# Barre de progression des places #}
+                    {% if event.seats and event.seats > 0 %}
+                        {% set pourcentage = ((event.seats - (event.reservations|length)) / event.seats * 100)|round %}
+                        <div class="mb-4">
+                            <div class="w-full bg-gray-100 rounded-full h-2">
+                                <div class="h-2 rounded-full transition-all
+                                    {{ pourcentage > 50 ? 'bg-green-500' : (pourcentage > 20 ? 'bg-orange-400' : 'bg-red-500') }}"
+                                     style="width: {{ pourcentage }}%">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1 text-right">{{ pourcentage }}% disponible</p>
+                        </div>
+                    {% endif %}
+
+                    {# Bouton action #}
+                    <a href="{{ path('app_events_show', {id: event.id}) }}"
+                       class="w-full block text-center font-bold py-3 px-4 rounded-xl transition shadow-sm
+                              {{ complet
+                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                 : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md' }}">
+                        {{ complet ? 'Voir les détails' : 'Voir et réserver →' }}
+                    </a>
+
+                </div>
+            </div>
+
         {% endfor %}
-    </ul>
+    </div>
+
 {% endif %}
+
 {% endblock %}

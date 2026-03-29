@@ -1,18 +1,297 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Réservations par événement{% endblock %}
+{% block title %}Réservations — {{ event.title }}{% endblock %}
 
 {% block body %}
-<h1>Réservations pour "{{ event.title }}"</h1>
-<table>
-    <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Date</th></tr></thead>
-    <tbody>
-    {% for res in reservations %}
-        <tr><td>{{ res.id }}</td><td>{{ res.name }}</td><td>{{ res.email }}</td><td>{{ res.phone }}</td><td>{{ res.createdAt ? res.createdAt|date('d/m/Y H:i') }}</td></tr>
+
+{# Breadcrumb #}
+<nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+    <a href="{{ path('admin_dashboard') }}" class="hover:text-blue-600 transition">⚙️ Dashboard</a>
+    <span class="text-gray-300">›</span>
+    <a href="{{ path('app_events_show', {id: event.id}) }}" class="hover:text-blue-600 transition">
+        {{ event.title|slice(0,30) }}{% if event.title|length > 30 %}…{% endif %}
+    </a>
+    <span class="text-gray-300">›</span>
+    <span class="text-gray-700 font-semibold">Réservations</span>
+</nav>
+
+{# Header #}
+<div class="bg-gradient-to-r from-purple-700 to-blue-800 rounded-2xl p-8 mb-8 text-white shadow-lg">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div class="bg-white bg-opacity-20 rounded-xl p-3">
+                <span class="text-3xl">📋</span>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold">Réservations</h1>
+                <p class="text-purple-200 mt-1 text-lg">{{ event.title }}</p>
+                <div class="flex flex-wrap gap-3 mt-2 text-sm text-purple-200">
+                    <span>📅 {{ event.date|date('d/m/Y à H:i') }}</span>
+                    {% if event.location %}
+                        <span>📍 {{ event.location }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <a href="{{ path('admin_event_edit', {id: event.id}) }}"
+           class="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30
+                  text-white font-semibold px-5 py-2 rounded-xl transition whitespace-nowrap">
+            ✏️ Modifier l'événement
+        </a>
+    </div>
+</div>
+
+{# Stats cards #}
+{% set totalPlaces = event.seats ?? 0 %}
+{% set totalReserves = reservations|length %}
+{% set placesRestantes = totalPlaces > 0 ? totalPlaces - totalReserves : null %}
+{% set pourcentageRempli = totalPlaces > 0 ? (totalReserves / totalPlaces * 100)|round : 0 %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4">
+        <div class="bg-blue-100 rounded-xl p-3 text-3xl">🎟️</div>
+        <div>
+            <p class="text-2xl font-bold text-gray-800">{{ totalReserves }}</p>
+            <p class="text-sm text-gray-500">Réservations</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4">
+        <div class="bg-green-100 rounded-xl p-3 text-3xl">👥</div>
+        <div>
+            <p class="text-2xl font-bold text-gray-800">{{ totalPlaces > 0 ? totalPlaces : '∞' }}</p>
+            <p class="text-sm text-gray-500">Places totales</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4">
+        <div class="{{ placesRestantes is not null and placesRestantes <= 0 ? 'bg-red-100' : 'bg-orange-100' }} rounded-xl p-3 text-3xl">
+            {{ placesRestantes is not null and placesRestantes <= 0 ? '🔴' : '🟡' }}
+        </div>
+        <div>
+            <p class="text-2xl font-bold
+                {{ placesRestantes is not null and placesRestantes <= 0 ? 'text-red-600' : 'text-gray-800' }}">
+                {{ placesRestantes is not null ? placesRestantes : '∞' }}
+            </p>
+            <p class="text-sm text-gray-500">Places restantes</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-5 flex items-center gap-4">
+        <div class="bg-purple-100 rounded-xl p-3 text-3xl">📊</div>
+        <div>
+            <p class="text-2xl font-bold text-gray-800">{{ pourcentageRempli }}%</p>
+            <p class="text-sm text-gray-500">Taux de remplissage</p>
+        </div>
+    </div>
+
+</div>
+
+{# Barre de remplissage globale #}
+{% if totalPlaces > 0 %}
+<div class="bg-white rounded-2xl shadow p-6 mb-8">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold text-gray-700">Taux de remplissage</h3>
+        <span class="text-sm font-semibold
+            {{ pourcentageRempli >= 100 ? 'text-red-600' : (pourcentageRempli >= 75 ? 'text-orange-500' : 'text-green-600') }}">
+            {{ totalReserves }} / {{ totalPlaces }} places
+        </span>
+    </div>
+    <div class="w-full bg-gray-100 rounded-full h-4">
+        <div class="h-4 rounded-full transition-all duration-700
+            {{ pourcentageRempli >= 100 ? 'bg-red-500' : (pourcentageRempli >= 75 ? 'bg-orange-400' : 'bg-green-500') }}"
+             style="width: {{ pourcentageRempli > 100 ? 100 : pourcentageRempli }}%">
+        </div>
+    </div>
+    <div class="flex justify-between text-xs text-gray-400 mt-2">
+        <span>0 place</span>
+        <span>{{ totalPlaces }} places</span>
+    </div>
+</div>
+{% endif %}
+
+{# Tableau des réservations #}
+<div class="bg-white rounded-2xl shadow overflow-hidden">
+
+    {# En-tête #}
+    <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row
+                justify-between items-start sm:items-center gap-3">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">Liste des réservations</h2>
+            <p class="text-sm text-gray-500 mt-0.5">
+                {{ totalReserves > 0 ? totalReserves ~ ' personne(s) inscrite(s)' : 'Aucune réservation pour le moment' }}
+            </p>
+        </div>
+        {% if totalReserves > 0 %}
+            <span class="bg-purple-100 text-purple-700 text-sm font-semibold px-4 py-1 rounded-full">
+                {{ totalReserves }} réservation(s)
+            </span>
+        {% endif %}
+    </div>
+
+    {% if reservations is empty %}
+
+        {# État vide #}
+        <div class="text-center py-20">
+            <div class="text-6xl mb-4">📭</div>
+            <h3 class="text-xl font-bold text-gray-600 mb-2">Aucune réservation</h3>
+            <p class="text-gray-400 mb-6">
+                Personne n'a encore réservé pour cet événement.
+            </p>
+            <a href="{{ path('app_events_show', {id: event.id}) }}"
+               class="inline-block bg-blue-600 hover:bg-blue-700 text-white
+                      font-bold py-3 px-8 rounded-xl transition">
+                Voir la page de l'événement
+            </a>
+        </div>
+
     {% else %}
-        <tr><td colspan="5">Aucune réservation.</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
-<a href="{{ path('admin_dashboard') }}">Retour au dashboard</a>
+
+        {# Vue desktop : tableau #}
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="text-left text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-6 py-4">#</th>
+                        <th class="text-left text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-4 py-4">Participant</th>
+                        <th class="text-left text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-4 py-4">Email</th>
+                        <th class="text-left text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-4 py-4">Téléphone</th>
+                        <th class="text-left text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-4 py-4">Date réservation</th>
+                        <th class="text-center text-xs font-semibold text-gray-500
+                                   uppercase tracking-wide px-4 py-4">Statut</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for resa in reservations %}
+                        <tr class="hover:bg-gray-50 transition">
+
+                            {# Numéro #}
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-bold text-gray-400">
+                                    #{{ loop.index }}
+                                </span>
+                            </td>
+
+                            {# Participant #}
+                            <td class="px-4 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 bg-gradient-to-br from-purple-400 to-blue-500
+                                                rounded-full flex items-center justify-center
+                                                text-white font-bold text-sm shrink-0">
+                                        {{ resa.name|slice(0,1)|upper }}
+                                    </div>
+                                    <span class="font-semibold text-gray-800 text-sm">
+                                        {{ resa.name }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            {# Email #}
+                            <td class="px-4 py-4">
+                                <a href="mailto:{{ resa.email }}"
+                                   class="text-sm text-blue-600 hover:text-blue-800
+                                          hover:underline transition">
+                                    {{ resa.email }}
+                                </a>
+                            </td>
+
+                            {# Téléphone #}
+                            <td class="px-4 py-4">
+                                {% if resa.phone %}
+                                    <a href="tel:{{ resa.phone }}"
+                                       class="text-sm text-gray-600 hover:text-gray-800 transition">
+                                        📞 {{ resa.phone }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-300 text-sm">—</span>
+                                {% endif %}
+                            </td>
+
+                            {# Date réservation #}
+                            <td class="px-4 py-4">
+                                <p class="text-sm text-gray-700 font-medium">
+                                    {{ resa.createdAt|date('d/m/Y') }}
+                                </p>
+                                <p class="text-xs text-gray-400">
+                                    {{ resa.createdAt|date('H:i') }}
+                                </p>
+                            </td>
+
+                            {# Statut #}
+                            <td class="px-4 py-4 text-center">
+                                <span class="bg-green-100 text-green-700 text-xs
+                                             font-bold px-3 py-1 rounded-full">
+                                    ✅ Confirmée
+                                </span>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Vue mobile : cards #}
+        <div class="md:hidden divide-y divide-gray-100">
+            {% for resa in reservations %}
+                <div class="p-5">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500
+                                        rounded-full flex items-center justify-center
+                                        text-white font-bold shrink-0">
+                                {{ resa.name|slice(0,1)|upper }}
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800">{{ resa.name }}</p>
+                                <p class="text-xs text-gray-400">#{{ loop.index }}</p>
+                            </div>
+                        </div>
+                        <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">
+                            ✅ Confirmée
+                        </span>
+                    </div>
+
+                    <div class="space-y-1 ml-13 pl-1">
+                        <a href="mailto:{{ resa.email }}"
+                           class="flex items-center gap-2 text-sm text-blue-600">
+                            <span>📧</span> {{ resa.email }}
+                        </a>
+                        {% if resa.phone %}
+                            <a href="tel:{{ resa.phone }}"
+                               class="flex items-center gap-2 text-sm text-gray-600">
+                                <span>📞</span> {{ resa.phone }}
+                            </a>
+                        {% endif %}
+                        <p class="flex items-center gap-2 text-xs text-gray-400">
+                            <span>🕐</span>
+                            Réservé le {{ resa.createdAt|date('d/m/Y à H:i') }}
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Footer tableau #}
+        <div class="p-5 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row
+                    justify-between items-center gap-3">
+            <p class="text-sm text-gray-500">
+                Total : <span class="font-bold text-gray-700">{{ totalReserves }}</span> réservation(s)
+            </p>
+            <a href="{{ path('admin_dashboard') }}"
+               class="flex items-center gap-2 text-blue-600 hover:text-blue-800
+                      font-semibold text-sm transition">
+                ← Retour au dashboard
+            </a>
+        </div>
+
+    {% endif %}
+</div>
+
 {% endblock %}

@@ -1,14 +1,150 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouvelle réservation{% endblock %}
+{% block title %}Réserver — {{ event.title }}{% endblock %}
 
 {% block body %}
-<h1>Réserver: {{ event.title }}</h1>
+<div class="max-w-2xl mx-auto">
 
-{{ form_start(form) }}
-{{ form_row(form.name) }}
-{{ form_row(form.email) }}
-{{ form_row(form.phone) }}
-{{ form_row(form.submit) }}
-{{ form_end(form) }}
+    <a href="{{ path('app_events_show', {id: event.id}) }}"
+       class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800
+              font-semibold mb-6 transition">
+        ← Retour à l'événement
+    </a>
+
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+        {# Header #}
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white">
+            <h1 class="text-2xl font-bold">Réserver une place</h1>
+            <p class="text-blue-200 mt-1">{{ event.title }}</p>
+            <div class="flex flex-wrap gap-4 mt-3 text-sm text-blue-100">
+                <span>📅 {{ event.date|date('d/m/Y à H:i') }}</span>
+                {% if event.location %}
+                    <span>📍 {{ event.location }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="p-8">
+
+            {# ===== Message erreur email déjà utilisé ===== #}
+            {% for message in app.flashes('error') %}
+                <div class="bg-red-50 border-l-4 border-red-500 rounded-xl
+                            p-4 mb-6 flex items-start gap-3">
+                    <span class="text-2xl shrink-0">⚠️</span>
+                    <div>
+                        <p class="font-bold text-red-700">Réservation impossible</p>
+                        <p class="text-sm text-red-600 mt-0.5">{{ message }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                {# ===== Champ Nom ===== #}
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Nom complet <span class="text-red-500">*</span>
+                    </label>
+                    {% set nameErrors = form.name.vars.errors %}
+                    {{ form_widget(form.name, {
+                        'attr': {
+                            'class': 'w-full border rounded-xl px-4 py-3 text-gray-800
+                                     focus:outline-none focus:ring-2 transition placeholder-gray-400 '
+                                     ~ (nameErrors|length > 0
+                                        ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                                        : 'border-gray-300 focus:ring-blue-500'),
+                            'placeholder': 'Votre nom et prénom'
+                        }
+                    }) }}
+                    {% if nameErrors|length > 0 %}
+                        <div class="mt-2 flex items-center gap-2 bg-red-50 border border-red-200
+                                    rounded-lg px-3 py-2">
+                            <span class="text-red-500 shrink-0">⚠️</span>
+                            {% for error in nameErrors %}
+                                <p class="text-red-600 text-sm font-semibold">{{ error.message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {# ===== Champ Email ===== #}
+                <div class="mb-5">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Adresse email <span class="text-red-500">*</span>
+                    </label>
+                    {% set emailErrors = form.email.vars.errors %}
+                    {{ form_widget(form.email, {
+                        'attr': {
+                            'class': 'w-full border rounded-xl px-4 py-3 text-gray-800
+                                     focus:outline-none focus:ring-2 transition placeholder-gray-400 '
+                                     ~ (emailErrors|length > 0
+                                        ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                                        : 'border-gray-300 focus:ring-blue-500'),
+                            'placeholder': 'votre@email.com'
+                        }
+                    }) }}
+                    {% if emailErrors|length > 0 %}
+                        <div class="mt-2 flex items-center gap-2 bg-red-50 border border-red-200
+                                    rounded-lg px-3 py-2">
+                            <span class="text-red-500 shrink-0">⚠️</span>
+                            {% for error in emailErrors %}
+                                <p class="text-red-600 text-sm font-semibold">{{ error.message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {# Note email unique #}
+                    <p class="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                        <span>ℹ️</span>
+                        Un seul email par événement — chaque adresse ne peut réserver qu'une seule place.
+                    </p>
+                </div>
+
+                {# ===== Champ Téléphone ===== #}
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Téléphone
+                        <span class="text-gray-400 font-normal text-xs ml-1">(optionnel)</span>
+                    </label>
+                    {% set phoneErrors = form.phone.vars.errors %}
+                    {{ form_widget(form.phone, {
+                        'attr': {
+                            'class': 'w-full border rounded-xl px-4 py-3 text-gray-800
+                                     focus:outline-none focus:ring-2 transition placeholder-gray-400 '
+                                     ~ (phoneErrors|length > 0
+                                        ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                                        : 'border-gray-300 focus:ring-blue-500'),
+                            'placeholder': '+216 XX XXX XXX'
+                        }
+                    }) }}
+                    {% if phoneErrors|length > 0 %}
+                        <div class="mt-2 flex items-center gap-2 bg-red-50 border border-red-200
+                                    rounded-lg px-3 py-2">
+                            <span class="text-red-500 shrink-0">⚠️</span>
+                            {% for error in phoneErrors %}
+                                <p class="text-red-600 text-sm font-semibold">{{ error.message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {# Note champs obligatoires #}
+                <p class="text-xs text-gray-400 mb-5 flex items-center gap-1">
+                    <span class="text-red-500 font-bold">*</span> Champs obligatoires
+                </p>
+
+                {# Bouton soumettre #}
+                {{ form_widget(form.submit, {
+                    'attr': {
+                        'class': 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold
+                                 py-3 px-6 rounded-xl transition shadow-md hover:shadow-lg
+                                 cursor-pointer text-lg'
+                    }
+                }) }}
+
+            {{ form_end(form) }}
+
+        </div>
+    </div>
+</div>
 {% endblock %}
