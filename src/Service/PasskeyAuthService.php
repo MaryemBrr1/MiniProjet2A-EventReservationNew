@@ -14,9 +14,13 @@ use Webauthn\PublicKeyCredentialCreationOptions;
 use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\PublicKeyCredentialUserEntity;
- 
+ /**
+ * Service d'authentification Passkey (WebAuthn/FIDO2)
+ * Gère l'enregistrement et la vérification des clés biométriques
+ * Conforme au standard W3C WebAuthn Level 2
+ */
 class PasskeyAuthService
-{
+{   
     public function __construct(
         private EntityManagerInterface $em,
         private WebauthnCredentialRepository $credRepo,
