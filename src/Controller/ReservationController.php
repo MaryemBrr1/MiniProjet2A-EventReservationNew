@@ -32,7 +32,7 @@ class ReservationController extends AbstractController
         // Vérifier si des places sont disponibles
         $reserved = $event->getReservations()->count();
         if ($event->getSeats() !== null && $reserved >= $event->getSeats()) {
-            $this->addFlash('error', 'Désolé, cet événement est complet.');
+            $this->addFlash('error', 'Désolée, cet événement est complet.');
             return $this->redirectToRoute('app_events_show', ['id' => $id]);
         }
 
