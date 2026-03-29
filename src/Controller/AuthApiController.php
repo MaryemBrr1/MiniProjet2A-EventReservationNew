@@ -12,7 +12,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
- 
+ /**
+ * Contrôleur API d'authentification
+ * Routes: /api/auth/register, /api/auth/passkey/*
+ * Retourne des JWT signés RSA-4096
+ */
 #[Route('/api/auth')]
 class AuthApiController extends AbstractController
 {
