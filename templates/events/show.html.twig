@@ -26,7 +26,7 @@
             {% else %}
                 <div class="w-full h-72 bg-gradient-to-br from-blue-500 to-purple-700
                             flex flex-col items-center justify-center text-white">
-                    <span class="text-8xl mb-3">🎪</span>
+                    <span class="text-8xl mb-3">🎭</span>
                     <span class="text-xl font-semibold opacity-80">{{ event.title }}</span>
                 </div>
             {% endif %}
@@ -74,7 +74,7 @@
 
                 {% if event.location %}
                 <div class="flex items-center gap-4 p-4 bg-red-50 rounded-xl">
-                    <div class="text-3xl">📍</div>
+                    <div class="text-3xl">📌</div>
                     <div>
                         <p class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Lieu</p>
                         <p class="font-bold text-gray-800">{{ event.location }}</p>
@@ -144,7 +144,7 @@
                 </div>
                 {% if event.location %}
                 <div class="flex items-center gap-3 text-sm text-gray-600">
-                    <span>📍</span>
+                    <span>📌</span>
                     <span>{{ event.location }}</span>
                 </div>
                 {% endif %}

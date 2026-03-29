@@ -3,8 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EventApp{% endblock %} — ISSAT</title>
+    <title>{% block title %}MaryemApp{% endblock %} — ISSAT</title>
     <script src="https://cdn.tailwindcss.com"></script>
+<style>
+    /* ===== THÈME VIOLET / INDIGO ===== */
+
+    /* Navbar */
+    nav { background: linear-gradient(to right, #4338ca, #312e81) !important; }
+
+    /* Boutons principaux */
+    .bg-blue-600 { background-color: #4f46e5 !important; }
+    .bg-blue-700 { background-color: #4338ca !important; }
+    .bg-blue-800 { background-color: #3730a3 !important; }
+    .bg-blue-900 { background-color: #312e81 !important; }
+    .hover\:bg-blue-600:hover { background-color: #4f46e5 !important; }
+    .hover\:bg-blue-700:hover { background-color: #4338ca !important; }
+
+    /* Textes */
+    .text-blue-600 { color: #4f46e5 !important; }
+    .text-blue-700 { color: #4338ca !important; }
+    .text-blue-800 { color: #3730a3 !important; }
+    .text-blue-900 { color: #312e81 !important; }
+    .text-blue-200 { color: #c7d2fe !important; }
+    .text-blue-100 { color: #e0e7ff !important; }
+    .hover\:text-blue-800:hover { color: #3730a3 !important; }
+
+    /* Fonds clairs */
+    .bg-blue-50  { background-color: #eef2ff !important; }
+    .bg-blue-100 { background-color: #e0e7ff !important; }
+    .hover\:bg-blue-50:hover  { background-color: #eef2ff !important; }
+    .hover\:bg-blue-100:hover { background-color: #e0e7ff !important; }
+
+    /* Bordures */
+    .border-blue-600 { border-color: #4f46e5 !important; }
+    .border-blue-200 { border-color: #c7d2fe !important; }
+    .border-blue-300 { border-color: #a5b4fc !important; }
+
+    /* Focus ring */
+    .focus\:ring-blue-500:focus { --tw-ring-color: #6366f1 !important; }
+
+    /* Gradients headers */
+    .from-blue-600 { --tw-gradient-from: #4f46e5 !important; }
+    .from-blue-700 { --tw-gradient-from: #4338ca !important; }
+    .from-blue-800 { --tw-gradient-from: #3730a3 !important; }
+    .to-blue-800   { --tw-gradient-to: #3730a3 !important; }
+    .to-blue-900   { --tw-gradient-to: #312e81 !important; }
+
+    /* Gradient navbar */
+    .from-blue-900 { --tw-gradient-from: #312e81 !important; }
+
+    /* Badge connecté */
+    .bg-blue-400 { background-color: #818cf8 !important; }
+    .bg-blue-900.text-white { background-color: #312e81 !important; }
+</style>
+    
     {% block stylesheets %}{% endblock %}
     <style>
         .nav-link {
@@ -40,10 +92,10 @@
                 <a href="{{ path('app_events_index') }}"
                    class="flex items-center gap-3 text-white hover:opacity-90 transition">
                     <div class="bg-white bg-opacity-20 rounded-xl p-2">
-                        <span class="text-2xl">🎪</span>
+                        <span class="text-2xl">🎭</span>
                     </div>
                     <div>
-                        <span class="text-xl font-bold tracking-wide">EventApp</span>
+                        <span class="text-xl font-bold tracking-wide">EventReservation</span>
                         <span class="hidden sm:block text-xs text-blue-300 -mt-1">ISSAT Sousse</span>
                     </div>
                 </a>
@@ -161,7 +213,7 @@
 
                 <div>
                     <div class="flex items-center gap-2 text-white font-bold text-lg mb-2">
-                        <span>🎪</span> EventApp
+                        <span>�</span> EventApp
                     </div>
                     <p class="text-sm text-gray-500">
                         Plateforme de gestion et réservation d'événements — ISSAT Sousse
@@ -208,7 +260,7 @@
 
             <div class="border-t border-gray-700 pt-4 flex flex-col sm:flex-row
                         justify-between items-center gap-2 text-xs text-gray-500">
-                <span>© 2026 EventApp — ISSAT Sousse · FIA2-GL</span>
+                <span>© 2026 MaryemEventApp — ISSAT Sousse · FIA2-GL</span>
                 <span>Symfony + JWT + Passkeys</span>
             </div>
         </div>
