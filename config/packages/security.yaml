@@ -1,3 +1,4 @@
+# Configuration sécurité — JWT + Passkeys + Form Login
 security:
     # =======================
     # Password hashing
