@@ -165,3 +165,7 @@ docker-compose down
 - [LexikJWT Bundle](https://github.com/lexik/LexikJWTAuthenticationBundle)
 - [WebAuthn Guide](https://webauthn.guide/)
 - [FIDO Alliance Passkeys](https://fidoalliance.org/passkeys/)
+## Notes de développement
+- Authentification sécurisée via JWT + Passkeys (WebAuthn/FIDO2)
+- Protection CSRF sur tous les formulaires
+- Validation unicité email par événement
